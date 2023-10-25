@@ -6,6 +6,7 @@ import '../../model/message.dart';
 
 class ChatService extends ChangeNotifier {
   //get instance of auth and firestore
+  String chatRoomId = "";
   final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
   final FirebaseFirestore _fireStore = FirebaseFirestore.instance;
 
@@ -26,7 +27,7 @@ class ChatService extends ChangeNotifier {
     //construct chat room id from current user id and receiver id
     List<String> ids = [currentUserId, receiverId];
     ids.sort(); //sort the ids to make chat room ids same for any pair
-    String chatRoomId = ids.join("_"); //combine the ids into single string
+    chatRoomId = ids.join("_"); //combine the ids into single string
 
     //add new message to database
     await _fireStore
