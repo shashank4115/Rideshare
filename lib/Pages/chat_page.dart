@@ -1,7 +1,10 @@
+import 'dart:async';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:ridesharev2/Components/chat_bubble.dart';
+import 'package:ridesharev2/Components/my_text_field.dart';
 import 'package:ridesharev2/Services/chat/chat_service.dart';
 
 class ChatPage extends StatefulWidget {
@@ -17,56 +20,42 @@ class ChatPage extends StatefulWidget {
 }
 
 class _ChatPageState extends State<ChatPage> {
-  String message = "";
+  final TextEditingController _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   final ChatService _chatService = ChatService();
   final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
+  final StreamController<bool> _scrollStreamController =
+      StreamController<bool>();
 
-  void speedUp() async {
-    _scrollController.animateTo(_scrollController.position.maxScrollExtent,
-        duration: const Duration(milliseconds: 300), curve: Curves.easeOut);
-    message = "Speed Up";
-    //only send message if there is something to send
-    if (message.isNotEmpty) {
-      await _chatService.sendMessage(widget.receiverUserId, message);
-      //clear text controller after sending the message
-      message = "";
-    }
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    _scrollStreamController.close();
+    super.dispose();
   }
 
-  void slowDown() async {
-    _scrollController.animateTo(_scrollController.position.maxScrollExtent,
-        duration: const Duration(milliseconds: 300), curve: Curves.easeOut);
-    message = "Slow Down";
-    //only send message if there is something to send
-    if (message.isNotEmpty) {
-      await _chatService.sendMessage(widget.receiverUserId, message);
-      //clear text controller after sending the message
-      message = "";
-    }
+  @override
+  void initState() {
+    super.initState();
+    _scrollStreamController.stream.listen((scroll) {
+      if (scroll) {
+        _scrollToBottom();
+      }
+    });
   }
 
-  void refuel() async {
+  void _scrollToBottom() {
     _scrollController.animateTo(_scrollController.position.maxScrollExtent,
-        duration: const Duration(milliseconds: 300), curve: Curves.easeOut);
-    message = "Need to Refuel";
-    //only send message if there is something to send
-    if (message.isNotEmpty) {
-      await _chatService.sendMessage(widget.receiverUserId, message);
-      //clear text controller after sending the message
-      message = "";
-    }
+        duration: const Duration(milliseconds: 300), curve: Curves.easeInOut);
   }
 
-  void sos() async {
+  void sendMessage() async {
     _scrollController.animateTo(_scrollController.position.maxScrollExtent,
-        duration: const Duration(milliseconds: 300), curve: Curves.easeOut);
-    message = "Emergency SOS";
-    //only send message if there is something to send
-    if (message.isNotEmpty) {
-      await _chatService.sendMessage(widget.receiverUserId, message);
-      //clear text controller after sending the message
-      message = "";
+        duration: const Duration(milliseconds: 300), curve: Curves.easeInOut);
+    if (_messageController.text.isNotEmpty) {
+      await _chatService.sendMessage(
+          widget.receiverUserId, _messageController.text);
+      _messageController.clear();
     }
   }
 
@@ -85,7 +74,6 @@ class _ChatPageState extends State<ChatPage> {
           ),
           //user input
           _buildMessageInput(),
-          const SizedBox(height: 25),
         ],
       ),
     );
@@ -153,75 +141,24 @@ class _ChatPageState extends State<ChatPage> {
 
   //build message input
   Widget _buildMessageInput() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              Expanded(
-                child: ElevatedButton(
-                  onPressed: speedUp,
-                  child: const Icon(
-                    Icons.arrow_upward,
-                    size: 40,
-                  ),
-                ),
-              ),
-              const SizedBox(
-                width: 5.0,
-              ),
-              Expanded(
-                child: ElevatedButton(
-                  onPressed: slowDown,
-                  child: const Icon(
-                    Icons.arrow_downward,
-                    size: 40,
-                  ),
-                ),
-              ),
-            ],
+    return Row(
+      children: [
+        const SizedBox(height: 20),
+        Expanded(
+          child: MyTextField(
+            controller: _messageController,
+            hintText: 'Message',
+            obscureText: false,
           ),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              Expanded(
-                child: ElevatedButton(
-                  onPressed: refuel,
-                  child: const Icon(
-                    Icons.local_gas_station_rounded,
-                    size: 40,
-                  ),
-                ),
-              ),
-              const SizedBox(
-                width: 5.0,
-              ),
-              Expanded(
-                child: ElevatedButton(
-                  onPressed: sos,
-                  child: const Icon(
-                    Icons.sos_sharp,
-                    size: 40,
-                  ),
-                ),
-              ),
-            ],
+        ),
+        IconButton(
+          onPressed: sendMessage,
+          icon: const Icon(
+            Icons.arrow_upward,
+            size: 35,
           ),
-          ElevatedButton(
-              onPressed: () {
-                print('pressed');
-              },
-              child: const Icon(
-                Icons.location_on,
-                size: 40,
-              )),
-          //send button
-        ],
-      ),
+        ),
+      ],
     );
   }
 }
