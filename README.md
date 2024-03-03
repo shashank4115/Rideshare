@@ -1,4 +1,4 @@
-# ridesharev2
+# rideshare
 
 A new Flutter project.
 
